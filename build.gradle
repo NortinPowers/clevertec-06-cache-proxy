@@ -25,6 +25,7 @@ ext {
     log4jVersion = '2.20.0'
     dbcpVersion = '2.11.0'
     dbutilsVersion = '1.8.1'
+    mybatisVersion = '3.5.14'
 }
 
 compileJava {
@@ -43,7 +44,9 @@ dependencies {
     implementation "org.apache.logging.log4j:log4j-core:${log4jVersion}"
     implementation "org.apache.commons:commons-dbcp2:${dbcpVersion}"
     implementation "commons-dbutils:commons-dbutils:${dbutilsVersion}"
-    
+    implementation "org.mybatis:mybatis:${mybatisVersion}"
+
+
     testAnnotationProcessor "org.mapstruct:mapstruct-processor:${mapstructVersion}"
 
     annotationProcessor "org.mapstruct:mapstruct-processor:${mapstructVersion}"
@@ -51,7 +54,7 @@ dependencies {
     testImplementation "org.mockito:mockito-junit-jupiter:${mockitoVersion}"
     testImplementation platform ("org.junit:junit-bom:${junitVersion}")
     testImplementation 'org.junit.jupiter:junit-jupiter'
-    testImplementation "org.assertj:assertj-core:${junitVersion}"
+    testImplementation "org.assertj:assertj-core:${assertjVersion}"
 
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
 }

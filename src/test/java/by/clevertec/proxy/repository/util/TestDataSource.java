@@ -11,7 +11,7 @@ import org.apache.commons.dbcp2.BasicDataSource;
 
 @Log4j2
 @UtilityClass
-public class DataSource {
+public class TestDataSource {
 
     private static final AppConfig APP_CONFIG;
     private static final int MAX_CONNECTION_COUNT;
@@ -26,7 +26,7 @@ public class DataSource {
     static {
         APP_CONFIG = new AppConfig();
         Map<String, Object> databaseProperties = APP_CONFIG.getProperty("database");
-        URL = (String) databaseProperties.get("url");
+        URL = databaseProperties.get("url") + "_test";
         LOGIN = (String) databaseProperties.get("username");
         PASS = (String) databaseProperties.get("password");
         MAX_CONNECTION_COUNT = (Integer) databaseProperties.get("max-connection");
@@ -72,7 +72,7 @@ public class DataSource {
                 instance.close();
             }
         } catch (SQLException exception) {
-            log.error(getErrorMessageToLog("closeDataSource()", DataSource.class), exception);
+            log.error(getErrorMessageToLog("closeDataSource()", TestDataSource.class), exception);
         }
     }
 }

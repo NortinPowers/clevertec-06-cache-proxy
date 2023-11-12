@@ -1,4 +1,4 @@
-package by.clevertec.proxy.utils;
+package by.clevertec.proxy.util;
 
 import lombok.experimental.UtilityClass;
 
