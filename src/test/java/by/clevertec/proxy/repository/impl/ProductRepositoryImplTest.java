@@ -10,8 +10,6 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import by.clevertec.proxy.entity.Product;
 import by.clevertec.proxy.util.ProductTestBuilder;
@@ -47,12 +45,11 @@ class ProductRepositoryImplTest {
 
     @Test
     void findByIdShouldReturnNotEmptyOptional_whenCorrectUuid() {
-        UUID uuid = PRODUCT_UUID;
+        Optional<Product> actual = productRepository.findById(PRODUCT_UUID);
 
-        Optional<Product> actual = productRepository.findById(uuid);
-
-        assertNotNull(actual);
-        assertTrue(actual.isPresent());
+        assertThat(actual)
+                .isNotNull()
+                .isNotEmpty();
     }
 
     @Test
@@ -106,12 +103,7 @@ class ProductRepositoryImplTest {
 
         @Test
         void deleteShouldNotReturnError_whenCalled() {
-            UUID uuid = ProductTestBuilder.builder()
-                    .build()
-                    .buildProduct()
-                    .getUuid();
-
-            assertDoesNotThrow(() -> productRepository.delete(uuid));
+            assertDoesNotThrow(() -> productRepository.delete(PRODUCT_UUID));
         }
 
         @Test
