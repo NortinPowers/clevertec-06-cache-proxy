@@ -42,5 +42,10 @@ public class DbUtil {
             log.error(getErrorMessageToLog("executeScript()", DbUtil.class), exception);
         }
         runner.runScript(reader);
+        try {
+            connection.close();
+        } catch (SQLException exception) {
+            log.error(getErrorMessageToLog("executeScript()", DbUtil.class), exception);
+        }
     }
 }
