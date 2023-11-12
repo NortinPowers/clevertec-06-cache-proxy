@@ -14,8 +14,6 @@ public class DataSource {
     private static final String PASS;
     private static final String DRIVER_CLASS_NAME;
 
-    private static volatile BasicDataSource instance;
-
     static {
         APP_CONFIG = new AppConfig();
         Map<String, Object> databaseProperties = APP_CONFIG.getProperty("database");
@@ -34,12 +32,14 @@ public class DataSource {
      * @return instance для BasicDataSource
      */
     public static BasicDataSource getDataSource() {
-        if (instance == null) {
-            instance = createDataSource();
-        }
-        return instance;
+        return createDataSource();
     }
 
+    /**
+     * Метод настраивает соединений BasicDataSource с БД.
+     *
+     * @return настроенное соединение BasicDataSource с БД.
+     */
     private static BasicDataSource createDataSource() {
         BasicDataSource instance = new BasicDataSource();
         instance.setDriverClassName(DRIVER_CLASS_NAME);
