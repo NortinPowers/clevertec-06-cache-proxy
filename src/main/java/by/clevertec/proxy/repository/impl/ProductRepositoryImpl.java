@@ -21,11 +21,10 @@ public class ProductRepositoryImpl implements ProductRepository {
 
     private static final String GET_ALL_PRODUCT = "select * from products";
     private final QueryRunner queryRunner;
-    private final BasicDataSource dataSource;
     private final LocalDateTimeRowProcessor rowProcessor;
 
     {
-        dataSource = getDataSource();
+        BasicDataSource dataSource = getDataSource();
         LocalDateTimeProcessor columnProcessor = new LocalDateTimeProcessor();
         rowProcessor = new LocalDateTimeRowProcessor(columnProcessor);
         queryRunner = new QueryRunner(dataSource);
@@ -39,7 +38,7 @@ public class ProductRepositoryImpl implements ProductRepository {
     @Override
     public List<Product> findAll() {
         List<Product> products = new ArrayList<>();
-        try (dataSource) {
+        try {
             products = queryRunner.query(GET_ALL_PRODUCT, new BeanListHandler<>(Product.class, rowProcessor));
         } catch (Exception exception){
             log.error(getErrorMessageToLog("findAll()", ProductRepositoryImpl.class), exception);

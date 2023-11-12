@@ -1,9 +1,14 @@
 package by.clevertec.proxy.repository.util;
 
+import static by.clevertec.proxy.utils.LogUtil.getErrorMessageToLog;
+
 import by.clevertec.proxy.config.AppConfig;
+import java.sql.SQLException;
 import java.util.Map;
+import lombok.extern.log4j.Log4j2;
 import org.apache.commons.dbcp2.BasicDataSource;
 
+@Log4j2
 public class DataSource {
 
     private static final AppConfig APP_CONFIG;
@@ -13,6 +18,8 @@ public class DataSource {
     private static final String LOGIN;
     private static final String PASS;
     private static final String DRIVER_CLASS_NAME;
+
+    private static volatile BasicDataSource instance;
 
     static {
         APP_CONFIG = new AppConfig();
@@ -32,7 +39,10 @@ public class DataSource {
      * @return instance для BasicDataSource
      */
     public static BasicDataSource getDataSource() {
-        return createDataSource();
+        if (instance == null) {
+            instance = createDataSource();
+        }
+        return instance;
     }
 
     /**
@@ -49,5 +59,18 @@ public class DataSource {
         instance.setInitialSize(MIN_CONNECTION_COUNT);
         instance.setMaxTotal(MAX_CONNECTION_COUNT);
         return instance;
+    }
+
+    /**
+     * Метод закрывает все соединения BasicDataSource с БД.
+     */
+    public static void closeDataSource() {
+        try {
+            if (instance != null) {
+                instance.close();
+            }
+        } catch (SQLException exception) {
+            log.error(getErrorMessageToLog("closeDataSource()", DataSource.class), exception);
+        }
     }
 }
