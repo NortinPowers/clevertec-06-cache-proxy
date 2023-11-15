@@ -8,6 +8,7 @@ import by.clevertec.proxy.repository.ProductRepository;
 import by.clevertec.proxy.repository.util.LocalDateTimeProcessor;
 import by.clevertec.proxy.repository.util.LocalDateTimeRowProcessor;
 import java.lang.reflect.Field;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -26,6 +27,7 @@ public class ProductRepositoryImpl implements ProductRepository {
     private static final String GET_PRODUCT_BY_UUID = "select * from products where uuid = ?";
     private static final String SAVE_PRODUCT = "insert into products (name, description, price, created) values (?, ?, ?, ?)";
     private static final String DELETE_PRODUCT = "delete from products where uuid = ?";
+    private static final String UPDATE_PRODUCT = "update products set name = ?, description = ?, price = ? where uuid = ?";
     private final QueryRunner queryRunner;
     private final LocalDateTimeRowProcessor rowProcessor;
 
@@ -60,6 +62,7 @@ public class ProductRepositoryImpl implements ProductRepository {
 
     @Override
     public Product save(Product product) {
+        setCreatedIfMissing(product);
         try {
             ScalarHandler<Object> scalarHandler = new ScalarHandler<>();
             UUID generatedKey = (UUID) queryRunner.insert(SAVE_PRODUCT, scalarHandler,
@@ -82,6 +85,16 @@ public class ProductRepositoryImpl implements ProductRepository {
         }
     }
 
+    @Override
+    public void update(UUID uuid, Product product) {
+        try {
+            queryRunner.query(UPDATE_PRODUCT, new BeanHandler<>(Product.class, rowProcessor),
+                    product.getName(), product.getDescription(), product.getPrice(), uuid);
+        } catch (Exception exception) {
+            log.error(getErrorMessageToLog("update()", ProductRepositoryImpl.class), exception);
+        }
+    }
+
     public void setDataSource(BasicDataSource newDataSource) {
         try {
             Field field = ProductRepositoryImpl.class.getDeclaredField("queryRunner");
@@ -89,6 +102,12 @@ public class ProductRepositoryImpl implements ProductRepository {
             field.set(this, new QueryRunner(newDataSource));
         } catch (Exception exception) {
             log.error(getErrorMessageToLog("setDataSource()", ProductRepositoryImpl.class), exception);
+        }
+    }
+
+    private void setCreatedIfMissing(Product product) {
+        if (product.getCreated() == null) {
+            product.setCreated(LocalDateTime.now());
         }
     }
 }

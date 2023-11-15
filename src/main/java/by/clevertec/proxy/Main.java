@@ -1,24 +1,22 @@
 package by.clevertec.proxy;
 
-import by.clevertec.proxy.data.InfoProductDto;
-import by.clevertec.proxy.entity.Product;
-import by.clevertec.proxy.repository.ProductRepository;
-import by.clevertec.proxy.repository.impl.ProductRepositoryImpl;
+import by.clevertec.proxy.data.ProductDto;
 import by.clevertec.proxy.repository.util.DataSource;
 import by.clevertec.proxy.service.ProductService;
 import by.clevertec.proxy.service.impl.ProductServiceImpl;
-import java.util.List;
+import java.util.UUID;
 
 public class Main {
     public static void main(String[] args) {
-        System.out.println("REP");
-        ProductRepository productRepository = new ProductRepositoryImpl();
-        List<Product> products = productRepository.findAll();
-        System.out.println(products);
-        System.out.println("SERV");
         ProductService productService = new ProductServiceImpl();
-        List<InfoProductDto> infoProducts = productService.getAll();
-        System.out.println(infoProducts);
+
+//        InfoProductDto infoProductDto = productService.get(UUID.fromString("021652ee-06bb-4bc6-a70c-2b99bee7eca3"));
+//        System.out.println(infoProductDto);
+//
+//        productService.create(new ProductDto("Продукт", "Описание продукта", BigDecimal.TEN));
+
+        productService.update(UUID.fromString("e74d0cd0-4573-42a4-a74e-8d81ad7b4923"), new ProductDto("продукт", "описание продукта", null));
+
         DataSource.closeDataSource();
     }
 }

@@ -19,3 +19,5 @@
 <li>*Реализовать метод для получения информации в формате xml</li>
 
 <h3>Solution</h3>
+<p>* перед началом работы настройте application.yaml (src/main/resources/application.yaml) и выполните скрипты (3 шт.) из src/main/resources/db</p>
+<p>** для тестов дополнительно создайте БД по скрипту db_create.sql из src/test/resources/db_create.sql</p>

@@ -37,4 +37,6 @@ public interface ProductRepository {
      * @param uuid идентификатор продукта
      */
     void delete(UUID uuid);
+
+    void update(UUID uuid, Product product);
 }
