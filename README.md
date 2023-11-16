@@ -19,5 +19,13 @@
 <li>*Реализовать метод для получения информации в формате xml</li>
 
 <h3>Solution</h3>
-<p>* перед началом работы настройте application.yaml (src/main/resources/application.yaml) и выполните скрипты (3 шт.) из src/main/resources/db</p>
+<p>* перед началом работы настройте application.yaml (src/main/resources/application.yaml) и выполните скрипты (src/main/resources/db, 3 шт.) из src/main/resources/db</p>
 <p>** для тестов дополнительно создайте БД по скрипту db_create.sql из src/test/resources/db_create.sql</p>
+<li>Алгоритмы кеширования реализованы через интерфейс Cache (src/main/java/by/clevertec/proxy/cache/Cache.java) в пакете impl.</li>
+<li>Слой dao разу реализован в виде базы postgreSql*.</li>
+<li>Для синхронизации с кешем использована реализация через aspectj (src/main/java/by/clevertec/proxy/proxy/CacheableAspect.java)</li>
+<li>При работе с БД роль ID выполняет UUID. Примеры валидного UUID - "UUID.fromString("76dbb74c-2f08-4bc0-8029-aed02147e737")"</li>
+<li>Для entity реализована валидация, требования указаны над сущностью Product (src/main/java/by/clevertec/proxy/entity/Product.java)</li>
+<li>Необходимые методы сервиса под будущие запросы GET/POST/DELETE/PUT реализованы в сервисе ProductService (src/main/java/by/clevertec/proxy/service/ProductService.java)</li>
+<li>Взаимодействие с БД через слой репозитория ProductRepository (src/main/java/by/clevertec/proxy/repository/ProductRepository.java). Для работы с запросами использован аналог QueryRunner и BasicDataSource в качестве пула соединений (org.apache.commons)</li>
+<li>Чтение настроечных переменных осуществляется классом AppConfig (src/main/java/by/clevertec/proxy/config/AppConfig.java)</li>
