@@ -14,17 +14,20 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import by.clevertec.proxy.cache.Cache;
 import by.clevertec.proxy.data.InfoProductDto;
 import by.clevertec.proxy.data.ProductDto;
 import by.clevertec.proxy.entity.Product;
 import by.clevertec.proxy.exception.ProductNotFoundException;
 import by.clevertec.proxy.mapper.ProductMapper;
+import by.clevertec.proxy.proxy.CacheableAspect;
 import by.clevertec.proxy.repository.ProductRepository;
-import by.clevertec.proxy.util.InfoProductTestBuilder;
 import by.clevertec.proxy.util.ProductTestBuilder;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.aspectj.lang.ProceedingJoinPoint;
+import org.aspectj.lang.Signature;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -39,10 +42,25 @@ class ProductServiceImplTest {
 
     @Mock
     private ProductMapper mapper;
+
     @Mock
     private ProductRepository productRepository;
+
+    @Mock
+    private Cache<UUID, InfoProductDto> cache;
+
+    @Mock
+    private ProceedingJoinPoint joinPoint;
+
+    @Mock
+    private Signature signature;
+
+    @InjectMocks
+    private CacheableAspect cacheableAspect;
+
     @InjectMocks
     private ProductServiceImpl productService;
+
     @Captor
     private ArgumentCaptor<Product> captor;
 
@@ -51,16 +69,28 @@ class ProductServiceImplTest {
 
         @Test
         void getShouldReturnInfoProductDto_whenCorrectUuid() {
-            InfoProductDto expected = InfoProductTestBuilder.builder().build()
+            InfoProductDto expected = ProductTestBuilder.builder()
+                    .build()
                     .buildInfoProductDto();
-            Product product = ProductTestBuilder.builder().build()
+            Product product = ProductTestBuilder.builder()
+                    .build()
                     .buildProduct();
             Optional<Product> optionalProduct = Optional.of(product);
 
-            when(productRepository.findById(product.getUuid()))
+            when(joinPoint.getSignature())
+                    .thenReturn(signature);
+            when(signature.getName())
+                    .thenReturn("get");
+            when(joinPoint.getArgs())
+                    .thenReturn(new Object[]{product.getUuid()});
+            when(cache.get(product.getUuid()))
+                    .thenReturn(null);
+            when(productRepository.findById(any(UUID.class)))
                     .thenReturn(optionalProduct);
             when(mapper.toInfoProductDto(optionalProduct.get()))
                     .thenReturn(expected);
+            doNothing()
+                    .when(cache).put(product.getUuid(), expected);
 
             InfoProductDto actual = productService.get(product.getUuid());
 
@@ -91,10 +121,12 @@ class ProductServiceImplTest {
 
         @Test
         void getAllShouldReturnInfoProductDtoList_whenProductsListIsNotEmpty() {
-            InfoProductDto infoProductDto = InfoProductTestBuilder.builder().build()
+            InfoProductDto infoProductDto = ProductTestBuilder.builder()
+                    .build()
                     .buildInfoProductDto();
             List<InfoProductDto> expected = List.of(infoProductDto);
-            Product product = ProductTestBuilder.builder().build()
+            Product product = ProductTestBuilder.builder()
+                    .build()
                     .buildProduct();
             List<Product> products = List.of(product);
 

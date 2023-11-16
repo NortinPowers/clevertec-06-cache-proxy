@@ -10,7 +10,6 @@ import by.clevertec.proxy.data.InfoProductDto;
 import by.clevertec.proxy.data.ProductDto;
 import by.clevertec.proxy.entity.Product;
 import by.clevertec.proxy.mapper.ProductMapperImpl;
-import by.clevertec.proxy.util.InfoProductTestBuilder;
 import by.clevertec.proxy.util.ProductTestBuilder;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -88,7 +87,7 @@ class ProductMapperImplTest {
             Product product = ProductTestBuilder.builder()
                     .build()
                     .buildProduct();
-            InfoProductDto expected = InfoProductTestBuilder.builder()
+            InfoProductDto expected = ProductTestBuilder.builder()
                     .build()
                     .buildInfoProductDto();
 
@@ -107,7 +106,7 @@ class ProductMapperImplTest {
                     .withName(null)
                     .build()
                     .buildProduct();
-            InfoProductDto expected = InfoProductTestBuilder.builder()
+            InfoProductDto expected = ProductTestBuilder.builder()
                     .withName(null)
                     .build()
                     .buildInfoProductDto();

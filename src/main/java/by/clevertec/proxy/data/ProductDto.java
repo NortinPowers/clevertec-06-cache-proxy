@@ -4,20 +4,18 @@ import java.math.BigDecimal;
 
 public record ProductDto(
 
-        /**
-         * {@link ru.clevertec.product.entity.Product}
+        /*
+          {@link by.clevertec.proxy.entity.Product}
          */
         String name,
 
-
-        /**
-         * {@link ru.clevertec.product.entity.Product}
+        /*
+         * {@link by.clevertec.proxy.entity.Product}
          */
         String description,
 
-
-        /**
-         * {@link ru.clevertec.product.entity.Product}
+        /*
+         * {@link by.clevertec.proxy.entity.Product}
          */
         BigDecimal price) {
 }

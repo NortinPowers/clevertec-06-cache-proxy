@@ -49,18 +49,18 @@ public class CacheableAspect {
         return result;
     }
 
-    @AfterReturning(pointcut = "execution(* by.clevertec.proxy.service.ProductService.create(..))", returning = "uuid")
+    @AfterReturning(pointcut = "@annotation(by.clevertec.proxy.proxy.Cacheable) && execution(* by.clevertec.proxy.service.ProductService.create(..))", returning = "uuid")
     public void cacheableCreate(UUID uuid) {
         Optional<Product> optionalProduct = productRepository.findById(uuid);
         optionalProduct.ifPresent(product -> cache.put(uuid, mapper.toInfoProductDto(product)));
     }
 
-    @AfterReturning(pointcut = "execution(* by.clevertec.proxy.service.ProductService.delete(..)) && args(uuid)", argNames = "uuid")
+    @AfterReturning(pointcut = "@annotation(by.clevertec.proxy.proxy.Cacheable) && execution(* by.clevertec.proxy.service.ProductService.delete(..)) && args(uuid)", argNames = "uuid")
     public void cacheableDelete(UUID uuid) {
         cache.remove(uuid);
     }
 
-    @AfterReturning(pointcut = "execution(* by.clevertec.proxy.service.ProductService.update(..)) && args(uuid, productDto)", argNames = "uuid, productDto")
+    @AfterReturning(pointcut = "@annotation(by.clevertec.proxy.proxy.Cacheable) && execution(* by.clevertec.proxy.service.ProductService.update(..)) && args(uuid, productDto)", argNames = "uuid, productDto")
     public void cacheableUpdate(UUID uuid, ProductDto productDto) {
         Product product = productRepository.findById(uuid).orElseThrow(() -> new ProductNotFoundException(uuid));
         cache.put(uuid, product);

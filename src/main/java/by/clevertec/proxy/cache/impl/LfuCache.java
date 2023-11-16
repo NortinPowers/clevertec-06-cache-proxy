@@ -25,6 +25,12 @@ public class LfuCache<K, V> implements Cache<K, V> {
         this.frequencyKeys.put(1, new LinkedHashSet<>());
     }
 
+    /**
+     * Кладет в Map кэша объект. При необходимости вызывает метод удаления избыточного объекта из Map кэша.
+     *
+     * @param key - ключ объекта для Map кэша.
+     * @param value - объект по ключу в Map кэша.
+     */
     @Override
     public void put(K key, V value) {
         if (maxSize > 0) {
@@ -42,6 +48,12 @@ public class LfuCache<K, V> implements Cache<K, V> {
         }
     }
 
+    /**
+     * Возвращает объект по ключу из Map кэша. Обновляет значение частоты использования для возвращенного объекта. Обновляет Map частот использования.
+     *
+     * @param key - ключ объекта для Map кэша.
+     * @return объект по переданному в Map ключу.
+     */
     @Override
     public V get(K key) {
         if (!cacheMap.containsKey(key)) {
@@ -60,6 +72,11 @@ public class LfuCache<K, V> implements Cache<K, V> {
         return cacheMap.get(key);
     }
 
+    /**
+     * Удаляет ключ-объект из Map кэша и и обновляет информацию о частоте использования ключей.
+     *
+     * @param key - ключ удаляемый из кэша.
+     */
     @Override
     public void remove(K key) {
         if (cacheMap.containsKey(key)) {
@@ -73,6 +90,9 @@ public class LfuCache<K, V> implements Cache<K, V> {
         }
     }
 
+    /**
+     * Удаляет ключ-объект с наименьшей частотой использования из кеша.
+     */
     private void evict() {
         K keyToRemove = frequencyKeys.get(minFrequency).iterator().next();
         frequencyKeys.get(minFrequency).remove(keyToRemove);

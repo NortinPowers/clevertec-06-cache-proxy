@@ -6,6 +6,7 @@ import static by.clevertec.proxy.util.TestConstant.PRODUCT_NAME;
 import static by.clevertec.proxy.util.TestConstant.PRODUCT_PRICE;
 import static by.clevertec.proxy.util.TestConstant.PRODUCT_UUID;
 
+import by.clevertec.proxy.data.InfoProductDto;
 import by.clevertec.proxy.data.ProductDto;
 import by.clevertec.proxy.entity.Product;
 import java.math.BigDecimal;
@@ -39,5 +40,9 @@ public class ProductTestBuilder {
 
     public ProductDto buildProductDto() {
         return new ProductDto(name, description, price);
+    }
+
+    public InfoProductDto buildInfoProductDto() {
+        return new InfoProductDto(uuid, name, description, price, created);
     }
 }
