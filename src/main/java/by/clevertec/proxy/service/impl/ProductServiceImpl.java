@@ -5,27 +5,21 @@ import by.clevertec.proxy.data.ProductDto;
 import by.clevertec.proxy.entity.Product;
 import by.clevertec.proxy.exception.ProductNotFoundException;
 import by.clevertec.proxy.mapper.ProductMapper;
-import by.clevertec.proxy.mapper.ProductMapperImpl;
 import by.clevertec.proxy.proxy.Cacheable;
 import by.clevertec.proxy.repository.ProductRepository;
-import by.clevertec.proxy.repository.impl.ProductRepositoryImpl;
 import by.clevertec.proxy.service.ProductService;
 import by.clevertec.proxy.validator.ProductDtoValidator;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import lombok.RequiredArgsConstructor;
 
+@RequiredArgsConstructor
 public class ProductServiceImpl implements ProductService {
 
     private final ProductMapper mapper;
     private final ProductRepository productRepository;
     private final ProductDtoValidator productDtoValidator;
-
-    {
-        mapper = new ProductMapperImpl();
-        productRepository = new ProductRepositoryImpl();
-        productDtoValidator = new ProductDtoValidator();
-    }
 
     @Override
     @Cacheable

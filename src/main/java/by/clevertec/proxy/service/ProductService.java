@@ -35,7 +35,7 @@ public interface ProductService {
     /**
      * Обновляет уже существующий продукт из информации полученной в DTO.
      *
-     * @param uuid - идентификатор продукта для обновления.
+     * @param uuid       - идентификатор продукта для обновления.
      * @param productDto - DTO с информацией об обновлении.
      */
     void update(UUID uuid, ProductDto productDto);

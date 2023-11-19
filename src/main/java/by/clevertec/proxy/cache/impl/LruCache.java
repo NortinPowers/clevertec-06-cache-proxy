@@ -24,7 +24,7 @@ public class LruCache<K, V> implements Cache<K, V> {
     /**
      * Кладет в Map кэша объект.
      *
-     * @param key - ключ объекта для Map кэша.
+     * @param key   - ключ объекта для Map кэша.
      * @param value - объект по ключу в Map кэша.
      */
     @Override

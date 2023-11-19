@@ -41,7 +41,7 @@ public interface ProductRepository {
     /**
      * Обновляет поля продукта по идентификатору.
      *
-     * @param uuid - идентификатор продукта.
+     * @param uuid    - идентификатор продукта.
      * @param product - объект содержащий поля для обновления.
      */
     void update(UUID uuid, Product product);

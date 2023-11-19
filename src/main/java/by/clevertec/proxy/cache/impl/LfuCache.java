@@ -28,7 +28,7 @@ public class LfuCache<K, V> implements Cache<K, V> {
     /**
      * Кладет в Map кэша объект. При необходимости вызывает метод удаления избыточного объекта из Map кэша.
      *
-     * @param key - ключ объекта для Map кэша.
+     * @param key   - ключ объекта для Map кэша.
      * @param value - объект по ключу в Map кэша.
      */
     @Override

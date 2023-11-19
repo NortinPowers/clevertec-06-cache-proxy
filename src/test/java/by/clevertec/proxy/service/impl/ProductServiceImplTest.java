@@ -1,15 +1,15 @@
 package by.clevertec.proxy.service.impl;
 
-import static by.clevertec.proxy.util.TestConstant.NEW_PRODUCT_DESCRIPTION;
-import static by.clevertec.proxy.util.TestConstant.NEW_PRODUCT_NAME;
-import static by.clevertec.proxy.util.TestConstant.NEW_PRODUCT_PRICE;
+import static by.clevertec.proxy.util.CacheableAspectUtil.setCacheableAspectField;
 import static by.clevertec.proxy.util.TestConstant.PRODUCT_INCORRECT_UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -19,15 +19,16 @@ import by.clevertec.proxy.data.InfoProductDto;
 import by.clevertec.proxy.data.ProductDto;
 import by.clevertec.proxy.entity.Product;
 import by.clevertec.proxy.exception.ProductNotFoundException;
+import by.clevertec.proxy.exception.ValidationException;
 import by.clevertec.proxy.mapper.ProductMapper;
 import by.clevertec.proxy.proxy.CacheableAspect;
 import by.clevertec.proxy.repository.ProductRepository;
 import by.clevertec.proxy.util.ProductTestBuilder;
+import by.clevertec.proxy.validator.ProductDtoValidator;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.aspectj.lang.ProceedingJoinPoint;
-import org.aspectj.lang.Signature;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -47,13 +48,13 @@ class ProductServiceImplTest {
     private ProductRepository productRepository;
 
     @Mock
-    private Cache<UUID, InfoProductDto> cache;
+    private Cache<UUID, Object> cache;
 
     @Mock
     private ProceedingJoinPoint joinPoint;
 
     @Mock
-    private Signature signature;
+    private ProductDtoValidator productDtoValidator;
 
     @InjectMocks
     private CacheableAspect cacheableAspect;
@@ -68,29 +69,69 @@ class ProductServiceImplTest {
     class GetTest {
 
         @Test
-        void getShouldReturnInfoProductDto_whenCorrectUuid() {
+        void getShouldReturnInfoProductDtoFromCache_whenInfoProductDtoWithCurrentUuidIsInCache() throws Throwable {
             InfoProductDto expected = ProductTestBuilder.builder()
                     .build()
                     .buildInfoProductDto();
             Product product = ProductTestBuilder.builder()
                     .build()
                     .buildProduct();
-            Optional<Product> optionalProduct = Optional.of(product);
 
-            when(joinPoint.getSignature())
-                    .thenReturn(signature);
-            when(signature.getName())
-                    .thenReturn("get");
+            when(joinPoint.getArgs())
+                    .thenReturn(new Object[]{product.getUuid()});
+            when(cache.get(product.getUuid()))
+                    .thenReturn(expected);
+
+            InfoProductDto actual = (InfoProductDto) cacheableAspect.cacheableGet(joinPoint);
+
+            assertThat(actual)
+                    .hasFieldOrPropertyWithValue(Product.Fields.uuid, expected.uuid())
+                    .hasFieldOrPropertyWithValue(Product.Fields.name, expected.name())
+                    .hasFieldOrPropertyWithValue(Product.Fields.description, expected.description())
+                    .hasFieldOrPropertyWithValue(Product.Fields.price, expected.price());
+            verify(joinPoint, never()).proceed();
+            verify(cache, never()).put(eq(product.getUuid()), any(InfoProductDto.class));
+        }
+
+        @Test
+        void getShouldReturnInfoProductDtoFromAop_whenInfoProductDtoWithCurrentUuidIsNotInCacheButIsInRepository() throws Throwable {
+            InfoProductDto expected = ProductTestBuilder.builder()
+                    .build()
+                    .buildInfoProductDto();
+            Product product = ProductTestBuilder.builder()
+                    .build()
+                    .buildProduct();
+
             when(joinPoint.getArgs())
                     .thenReturn(new Object[]{product.getUuid()});
             when(cache.get(product.getUuid()))
                     .thenReturn(null);
-            when(productRepository.findById(any(UUID.class)))
-                    .thenReturn(optionalProduct);
-            when(mapper.toInfoProductDto(optionalProduct.get()))
+            when(joinPoint.proceed())
                     .thenReturn(expected);
-            doNothing()
-                    .when(cache).put(product.getUuid(), expected);
+
+            InfoProductDto actual = (InfoProductDto) cacheableAspect.cacheableGet(joinPoint);
+
+            assertThat(actual)
+                    .hasFieldOrPropertyWithValue(Product.Fields.uuid, expected.uuid())
+                    .hasFieldOrPropertyWithValue(Product.Fields.name, expected.name())
+                    .hasFieldOrPropertyWithValue(Product.Fields.description, expected.description())
+                    .hasFieldOrPropertyWithValue(Product.Fields.price, expected.price());
+            verify(cache).put(product.getUuid(), expected);
+        }
+
+        @Test
+        void getShouldReturnInfoProductDtoFromRepository_whenProductWithCurrentUuidExist() {
+            InfoProductDto expected = ProductTestBuilder.builder()
+                    .build()
+                    .buildInfoProductDto();
+            Product product = ProductTestBuilder.builder()
+                    .build()
+                    .buildProduct();
+
+            when(productRepository.findById(product.getUuid()))
+                    .thenReturn(Optional.of(product));
+            when(mapper.toInfoProductDto(product))
+                    .thenReturn(expected);
 
             InfoProductDto actual = productService.get(product.getUuid());
 
@@ -102,17 +143,32 @@ class ProductServiceImplTest {
         }
 
         @Test
-        void getShouldReturnProductNotFoundException_whenIncorrectUuid() {
-            Product product = ProductTestBuilder.builder()
-                    .withUuid(null)
-                    .build()
-                    .buildProduct();
-            Optional<Product> empty = Optional.empty();
+        void getShouldThrowNotProductFoundExceptionFromAop_whenInfoProductDtoWithCurrentUuidIsNotInCacheAndRepository() throws Throwable {
+            ProductNotFoundException expectedException = new ProductNotFoundException(PRODUCT_INCORRECT_UUID);
 
-            when(productRepository.findById(product.getUuid()))
-                    .thenReturn(empty);
+            when(joinPoint.getArgs())
+                    .thenReturn(new Object[]{PRODUCT_INCORRECT_UUID});
+            when(cache.get(PRODUCT_INCORRECT_UUID))
+                    .thenReturn(null);
+            when(joinPoint.proceed())
+                    .thenThrow(expectedException);
 
-            assertThrows(ProductNotFoundException.class, () -> productService.get(product.getUuid()));
+            ProductNotFoundException actualException = assertThrows(ProductNotFoundException.class, () -> cacheableAspect.cacheableGet(joinPoint));
+
+            verify(cache, never()).put(eq(PRODUCT_INCORRECT_UUID), any(InfoProductDto.class));
+            assertEquals(expectedException.getMessage(), actualException.getMessage());
+        }
+
+        @Test
+        void getShouldThrowProductNotFoundExceptionFromRepository__whenProductWithCurrentUuidIsNotExist() {
+            ProductNotFoundException expectedException = new ProductNotFoundException(PRODUCT_INCORRECT_UUID);
+
+            when(productRepository.findById(PRODUCT_INCORRECT_UUID))
+                    .thenReturn(Optional.empty());
+
+            ProductNotFoundException actualException = assertThrows(ProductNotFoundException.class, () -> productService.get(PRODUCT_INCORRECT_UUID));
+
+            assertEquals(expectedException.getMessage(), actualException.getMessage());
         }
     }
 
@@ -140,7 +196,6 @@ class ProductServiceImplTest {
             assertThat(actual)
                     .hasSize(expected.size())
                     .isEqualTo(expected);
-            verify(mapper, atLeastOnce()).toInfoProductDto(any(Product.class));
         }
 
         @Test
@@ -176,6 +231,8 @@ class ProductServiceImplTest {
                     .withUuid(generetedUuid).build()
                     .buildProduct();
 
+            doNothing()
+                    .when(productDtoValidator).validate(productDto);
             when(mapper.toProduct(productDto))
                     .thenReturn(product);
             when(productRepository.save(product))
@@ -187,17 +244,57 @@ class ProductServiceImplTest {
         }
 
         @Test
+        void createShouldReturnUuidAndAddInfoProductDtoInCache_whenProductDtoIsCorrect() throws Exception {
+            ProductDto productDto = ProductTestBuilder.builder()
+                    .build()
+                    .buildProductDto();
+            Product product = ProductTestBuilder.builder()
+                    .withUuid(null)
+                    .build()
+                    .buildProduct();
+            UUID generetedUuid = UUID.fromString("d3d75177-f087-4c70-ae30-05d947733c4e");
+            Product createdProduct = ProductTestBuilder.builder()
+                    .withUuid(generetedUuid)
+                    .build()
+                    .buildProduct();
+            InfoProductDto infoProductDto = ProductTestBuilder.builder()
+                    .withUuid(generetedUuid)
+                    .build()
+                    .buildInfoProductDto();
+            setCacheableAspectField(cacheableAspect, cache, productRepository, mapper);
+
+            doNothing()
+                    .when(productDtoValidator).validate(productDto);
+            when(mapper.toProduct(productDto))
+                    .thenReturn(product);
+            when(productRepository.save(product))
+                    .thenReturn(createdProduct);
+            when(productRepository.findById(generetedUuid))
+                    .thenReturn(Optional.of(createdProduct));
+            when(mapper.toInfoProductDto(createdProduct))
+                    .thenReturn(infoProductDto);
+
+            UUID actual = productService.create(productDto);
+            cacheableAspect.cacheableCreate(generetedUuid);
+
+            verify(cache).put(actual, infoProductDto);
+        }
+
+        @Test
         void createShouldSetProductUuid_whenInvokeRepository() {
             ProductDto productDto = ProductTestBuilder.builder()
                     .build()
                     .buildProductDto();
             Product productToSave = ProductTestBuilder.builder()
-                    .withUuid(null).build()
+                    .withUuid(null)
+                    .build()
                     .buildProduct();
             Product createdProduct = ProductTestBuilder.builder()
                     .build()
                     .buildProduct();
 
+            doNothing()
+                    .when(productDtoValidator).validate(productDto);
             when(mapper.toProduct(productDto))
                     .thenReturn(productToSave);
             when(productRepository.save(productToSave))
@@ -216,9 +313,13 @@ class ProductServiceImplTest {
                     .build()
                     .buildProductDto();
             Product productToSave = ProductTestBuilder.builder()
+                    .withUuid(null)
+                    .withCreated(null)
                     .build()
                     .buildProduct();
 
+            doNothing()
+                    .when(productDtoValidator).validate(productDto);
             when(mapper.toProduct(productDto))
                     .thenReturn(productToSave);
             when(productRepository.save(productToSave))
@@ -228,18 +329,31 @@ class ProductServiceImplTest {
 
             verify(productRepository, atLeastOnce()).save(captor.capture());
             assertThat(captor.getValue())
-                    .hasFieldOrPropertyWithValue(Product.Fields.uuid, productToSave.getUuid());
+                    .hasFieldOrPropertyWithValue(Product.Fields.uuid, null)
+                    .hasFieldOrPropertyWithValue(Product.Fields.created, null);
         }
 
         @Test
-        void createShouldReturnIllegalArgumentException_whenProductDtoIsNull() {
-            ProductDto productDto = null;
-            IllegalArgumentException exception = new IllegalArgumentException();
+        void createShouldReturnNullPointerException_whenProductDtoIsNull() {
+            assertThrows(NullPointerException.class, () -> productService.create(null));
+            verify(mapper, never()).toProduct(any(ProductDto.class));
+            verify(productRepository, never()).save(any(Product.class));
+        }
 
-            when(productRepository.save(null))
-                    .thenThrow(exception);
+        @Test
+        void createShouldReturnValidateException_whenProductDtoFieldIsNotValid() {
+            ProductDto productDto = ProductTestBuilder.builder()
+                    .withName("Plumbus")
+                    .build()
+                    .buildProductDto();
+            ValidationException expected = new ValidationException(List.of("incorrect product name"));
 
-            assertThrows(IllegalArgumentException.class, () -> productService.create(productDto));
+            doThrow(expected)
+                    .when(productDtoValidator).validate(productDto);
+
+            ValidationException actual = assertThrows(ValidationException.class, () -> productService.create(productDto));
+            assertThat(actual)
+                    .hasMessage(expected.getMessage());
             verify(mapper, never()).toProduct(any(ProductDto.class));
             verify(productRepository, never()).save(any(Product.class));
         }
@@ -247,33 +361,6 @@ class ProductServiceImplTest {
 
     @Nested
     class UpdateTest {
-
-        @Test
-        void updateShouldUpdateProduct_whenProductDtoAndUuidIsCorrect() {
-            Product product = ProductTestBuilder.builder().build().buildProduct();
-            UUID uuid = product.getUuid();
-            Optional<Product> optionalProduct = Optional.of(product);
-            ProductDto updatedProductDto = ProductTestBuilder.builder()
-                    .withName(NEW_PRODUCT_NAME)
-                    .withDescription(NEW_PRODUCT_DESCRIPTION)
-                    .withPrice(NEW_PRODUCT_PRICE).build()
-                    .buildProductDto();
-            Product updatedProduct = ProductTestBuilder.builder()
-                    .withUuid(uuid)
-                    .withName(NEW_PRODUCT_NAME)
-                    .withDescription(NEW_PRODUCT_DESCRIPTION)
-                    .withPrice(NEW_PRODUCT_PRICE).build()
-                    .buildProduct();
-
-            when(productRepository.findById(uuid))
-                    .thenReturn(optionalProduct);
-            when(mapper.merge(product, updatedProductDto))
-                    .thenReturn(updatedProduct);
-            when(productRepository.save(updatedProduct))
-                    .thenReturn(updatedProduct);
-
-            productService.update(uuid, updatedProductDto);
-        }
 
         @Test
         void updateShouldReturnProductNotFoundException_whenIncorrectUuid() {
@@ -306,3 +393,4 @@ class ProductServiceImplTest {
         }
     }
 }
+

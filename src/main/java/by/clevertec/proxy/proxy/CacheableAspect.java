@@ -63,7 +63,7 @@ public class CacheableAspect {
     @AfterReturning(pointcut = "@annotation(by.clevertec.proxy.proxy.Cacheable) && execution(* by.clevertec.proxy.service.ProductService.update(..)) && args(uuid, productDto)", argNames = "uuid, productDto")
     public void cacheableUpdate(UUID uuid, ProductDto productDto) {
         Product product = productRepository.findById(uuid).orElseThrow(() -> new ProductNotFoundException(uuid));
-        cache.put(uuid, product);
+        cache.put(uuid, mapper.toInfoProductDto(product));
     }
 
     private Cache<UUID, Object> configureCache() {
